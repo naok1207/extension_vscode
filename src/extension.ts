@@ -1,7 +1,6 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 "use strict";
-import { exec } from 'child_process';
 import * as vscode from 'vscode';
 const { execSync } = require('child_process');
 
