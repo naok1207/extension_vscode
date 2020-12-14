@@ -24,8 +24,9 @@ async function checktext(langs: string) {
   json = JSON.parse(`${json}`);
 
   if (json["ok"] == "true") {
-    await shellcommand();
-    await vscode.commands.executeCommand("cursorRight");
+    if (json["from"]["code"].replace(/\s+/g, "") != json["to"]["code"].replace(/\s+/g, "")) {
+      await showMessage()
+    }
     await linebreak();
   } else {
     await linebreak();
@@ -54,17 +55,38 @@ async function checktext(langs: string) {
       await vscode.commands.executeCommand("cursorWordEndRight");
       await vscode.commands.executeCommand("cursorHome");
     }
-	}
-	
-	async function shellcommand() {
-    // vscode.window.showInformationMessage("Edit text" + "from: " + line.text + " to: " + `${text.toString()}`);
-    vscode.window.showInformationMessage(`${json["message"]}`);
+  }
 
+  async function showMessage() {
+    const messageJudge = json["messages"][0]["message"];
+    const messageExpr = json["messages"][1]["message"];
+    const content = `${messageJudge}記述です。${json["to"]["language"]}の記述 '${json["to"]["code"]}' に修正しますか？`;
+    if (messageExpr != '') {
+      vscode.window.showInformationMessage(messageExpr);
+    }
+    const message = vscode.window.showInformationMessage( content,  "yes", "no" );
+    message.then((value) => {
+      if(value == 'yes') {
+        changeText();
+      }
+    });
+  }
+
+  async function changeText() {
     await editor.edit(textEditor => {
       textEditor.replace(
         new vscode.Range(new vscode.Position(lineNumber, line.firstNonWhitespaceCharacterIndex), new vscode.Position(lineNumber, lineLength)),
         json["to"]["code"]
       );
     });
+  }
+
+  async function insertIndent() {
+    await editor.edit(textEditor => {
+      textEditor.insert(
+        new vscode.Position(lineNumber + 1, 0),
+        "\t".repeat(line.firstNonWhitespaceCharacterIndex / 2 + 1)
+      )
+    })
   }
 }

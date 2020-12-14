@@ -32,8 +32,9 @@ function checktext(langs) {
         let json = execSync(`do.pl '${text}' ${langs}`);
         json = JSON.parse(`${json}`);
         if (json["ok"] == "true") {
-            yield shellcommand();
-            yield vscode.commands.executeCommand("cursorRight");
+            if (json["from"]["code"].replace(/\s+/g, "") != json["to"]["code"].replace(/\s+/g, "")) {
+                yield showMessage();
+            }
             yield linebreak();
         }
         else {
@@ -63,12 +64,33 @@ function checktext(langs) {
                 }
             });
         }
-        function shellcommand() {
+        function showMessage() {
             return __awaiter(this, void 0, void 0, function* () {
-                // vscode.window.showInformationMessage("Edit text" + "from: " + line.text + " to: " + `${text.toString()}`);
-                vscode.window.showInformationMessage(`${json["message"]}`);
+                const messageJudge = json["messages"][0]["message"];
+                const messageExpr = json["messages"][1]["message"];
+                const content = `${messageJudge}記述です。${json["to"]["language"]}の記述 '${json["to"]["code"]}' に修正しますか？`;
+                if (messageExpr != '') {
+                    vscode.window.showInformationMessage(messageExpr);
+                }
+                const message = vscode.window.showInformationMessage(content, "yes", "no");
+                message.then((value) => {
+                    if (value == 'yes') {
+                        changeText();
+                    }
+                });
+            });
+        }
+        function changeText() {
+            return __awaiter(this, void 0, void 0, function* () {
                 yield editor.edit(textEditor => {
                     textEditor.replace(new vscode.Range(new vscode.Position(lineNumber, line.firstNonWhitespaceCharacterIndex), new vscode.Position(lineNumber, lineLength)), json["to"]["code"]);
+                });
+            });
+        }
+        function insertIndent() {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield editor.edit(textEditor => {
+                    textEditor.insert(new vscode.Position(lineNumber + 1, 0), "\t".repeat(line.firstNonWhitespaceCharacterIndex / 2 + 1));
                 });
             });
         }
