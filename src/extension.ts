@@ -27,6 +27,9 @@ async function checktext(langs: string) {
     if (json["from"]["code"].replace(/\s+/g, "") != json["to"]["code"].replace(/\s+/g, "")) {
       await showMessage()
     }
+    if (json["messages"][1]["message"] != '') {
+      vscode.window.showInformationMessage(json["messages"][1]["message"]);
+    }
     await linebreak();
   } else {
     await linebreak();
@@ -59,11 +62,7 @@ async function checktext(langs: string) {
 
   async function showMessage() {
     const messageJudge = json["messages"][0]["message"];
-    const messageExpr = json["messages"][1]["message"];
     const content = `${messageJudge}記述です。${json["to"]["language"]}の記述 '${json["to"]["code"]}' に修正しますか？`;
-    if (messageExpr != '') {
-      vscode.window.showInformationMessage(messageExpr);
-    }
     const message = vscode.window.showInformationMessage( content,  "yes", "no" );
     message.then((value) => {
       if(value == 'yes') {
